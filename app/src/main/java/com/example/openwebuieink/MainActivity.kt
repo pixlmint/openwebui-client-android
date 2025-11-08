@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -69,17 +71,40 @@ fun AppNavigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val chats by mainViewModel.chats.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
                 NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Add, contentDescription = "New Chat") },
+                    label = { Text(text = "New Chat") },
+                    selected = false,
+                    onClick = { /* TODO */ }
+                )
+                NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                     label = { Text(text = "Settings") },
                     selected = false,
-                    onClick = { navController.navigate("settings") }
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        navController.navigate("settings")
+                    }
                 )
+                LazyColumn {
+                    items(chats) { chat ->
+                        NavigationDrawerItem(
+                            icon = { Icon(Icons.Default.Face, contentDescription = "Chat") },
+                            label = { Text(chat.title) },
+                            selected = false,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                // navController.navigate("chat/${chat.id}")
+                            }
+                        )
+                    }
+                }
             }
         }
     ) {

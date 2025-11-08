@@ -12,4 +12,7 @@ interface OpenWebuiApi {
 
     @GET("api/v1/models")
     suspend fun getModels(@Query("refresh") refresh: Boolean = false): ModelsResponse
+
+    @GET("api/v1/chats/list")
+    suspend fun getChats(): List<Chat>
 }

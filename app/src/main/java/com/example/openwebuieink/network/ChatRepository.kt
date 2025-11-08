@@ -33,6 +33,7 @@ class ChatRepository {
             .build()
     }
 
+    @kotlinx.serialization.InternalSerializationApi
     private fun getApi(settings: Settings): OpenWebuiApi {
         val contentType = "application/json".toMediaType()
         val json = Json { ignoreUnknownKeys = true }
@@ -46,11 +47,18 @@ class ChatRepository {
         return retrofit.create(OpenWebuiApi::class.java)
     }
 
+    @kotlinx.serialization.InternalSerializationApi
     suspend fun getChatCompletion(settings: Settings, request: ChatRequest): ChatResponse {
         return getApi(settings).getChatCompletion(request)
     }
 
+    @kotlinx.serialization.InternalSerializationApi
     suspend fun getModels(settings: Settings): ModelsResponse {
         return getApi(settings).getModels()
+    }
+
+    @kotlinx.serialization.InternalSerializationApi
+    suspend fun getChats(settings: Settings): List<Chat> {
+        return getApi(settings).getChats()
     }
 }
