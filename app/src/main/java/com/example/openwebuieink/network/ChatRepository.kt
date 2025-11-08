@@ -49,4 +49,8 @@ class ChatRepository {
     suspend fun getChatCompletion(settings: Settings, request: ChatRequest): ChatResponse {
         return getApi(settings).getChatCompletion(request)
     }
+
+    suspend fun getModels(settings: Settings): ModelsResponse {
+        return getApi(settings).getModels()
+    }
 }

@@ -7,6 +7,7 @@ import com.example.openwebuieink.db.AppDatabase
 import com.example.openwebuieink.network.ChatMessage
 import com.example.openwebuieink.network.ChatRequest
 import com.example.openwebuieink.network.ChatRepository
+import com.example.openwebuieink.network.Model
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -20,7 +21,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val _chatHistory = MutableStateFlow<List<ChatMessage>>(emptyList())
     val chatHistory: StateFlow<List<ChatMessage>> = _chatHistory
 
-    fun sendMessage(message: String) {
+    fun sendMessage(message: String, model: Model?) {
         val userMessage = ChatMessage(role = "user", content = message)
         _chatHistory.value = _chatHistory.value + userMessage
 
@@ -33,7 +34,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             val request = ChatRequest(
-                model = settings.defaultModel,
+                model = model?.id ?: settings.defaultModel,
                 messages = _chatHistory.value
             )
 

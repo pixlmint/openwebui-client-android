@@ -1,5 +1,6 @@
 package com.example.openwebuieink.ui
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,15 +26,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.openwebuieink.ModelSelectionButton
 
 @Composable
-fun ChatScreen(navController: NavController) {
-    val viewModel: ChatViewModel = viewModel()
+fun ChatScreen(navController: NavController, mainViewModel: MainViewModel) {
+    val factory = ChatViewModelFactory(LocalContext.current.applicationContext as Application)
+    val viewModel: ChatViewModel = viewModel(factory = factory)
     val chatHistory by viewModel.chatHistory.collectAsState()
     var message by remember { mutableStateOf("") }
+    val settings by mainViewModel.settings.collectAsState(initial = null)
+    val selectedModel by mainViewModel.selectedModel.collectAsState()
+
+    LaunchedEffect(settings) {
+        settings?.let {
+            mainViewModel.getModels(it)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -41,8 +54,10 @@ fun ChatScreen(navController: NavController) {
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            ModelSelectionButton(viewModel = mainViewModel)
             Button(onClick = { navController.navigate("settings") }) {
                 Text("Settings")
             }
@@ -84,7 +99,7 @@ fun ChatScreen(navController: NavController) {
             Button(
                 onClick = {
                     if (message.isNotBlank()) {
-                        viewModel.sendMessage(message)
+                        viewModel.sendMessage(message, selectedModel)
                         message = ""
                     }
                 }

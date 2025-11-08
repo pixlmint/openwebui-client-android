@@ -4,31 +4,99 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.openwebuieink.ui.ChatScreen
+import com.example.openwebuieink.ui.MainViewModel
 import com.example.openwebuieink.ui.SettingsScreen
 import com.example.openwebuieink.ui.theme.OpenwebuiEinkTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val mainViewModel: MainViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return MainViewModel(application) as T
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             OpenwebuiEinkTheme {
-                AppNavigation()
+                AppNavigation(mainViewModel)
             }
         }
     }
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "chat") {
-        composable("chat") { ChatScreen(navController) }
+        composable("chat") { ChatScreen(navController, mainViewModel) }
         composable("settings") { SettingsScreen(navController) }
+    }
+}
+
+@Composable
+fun ModelSelectionButton(viewModel: MainViewModel) {
+    val selectedModel by viewModel.selectedModel.collectAsState()
+    val showDialog = remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .clickable { showDialog.value = true },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = selectedModel?.id ?: "Select Model")
+    }
+
+    if (showDialog.value) {
+        ModelSelectionDialog(viewModel = viewModel) {
+            showDialog.value = false
+        }
+    }
+}
+
+@Composable
+fun ModelSelectionDialog(viewModel: MainViewModel, onDismiss: () -> Unit) {
+    val models by viewModel.models.collectAsState()
+
+    Dialog(onDismissRequest = onDismiss) {
+        models.forEach { model ->
+            Text(
+                text = model.id,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        viewModel.selectModel(model)
+                        onDismiss()
+                    }
+                    .padding(16.dp)
+            )
+        }
     }
 }
