@@ -9,12 +9,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,6 +37,7 @@ import com.example.openwebuieink.ui.ChatScreen
 import com.example.openwebuieink.ui.MainViewModel
 import com.example.openwebuieink.ui.SettingsScreen
 import com.example.openwebuieink.ui.theme.OpenwebuiEinkTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -53,9 +63,26 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "chat") {
-        composable("chat") { ChatScreen(navController, mainViewModel) }
-        composable("settings") { SettingsScreen(navController) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                    label = { Text(text = "Settings") },
+                    selected = false,
+                    onClick = { navController.navigate("settings") }
+                )
+            }
+        }
+    ) {
+        NavHost(navController = navController, startDestination = "chat") {
+            composable("chat") { ChatScreen(navController, mainViewModel) { scope.launch { drawerState.open() } } }
+            composable("settings") { SettingsScreen(navController) }
+        }
     }
 }
 
@@ -66,7 +93,6 @@ fun ModelSelectionButton(viewModel: MainViewModel) {
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()
             .padding(16.dp)
             .clickable { showDialog.value = true },
         contentAlignment = Alignment.Center

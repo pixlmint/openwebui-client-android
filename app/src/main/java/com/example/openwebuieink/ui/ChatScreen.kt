@@ -13,7 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -33,7 +37,7 @@ import androidx.navigation.NavController
 import com.example.openwebuieink.ModelSelectionButton
 
 @Composable
-fun ChatScreen(navController: NavController, mainViewModel: MainViewModel) {
+fun ChatScreen(navController: NavController, mainViewModel: MainViewModel, onMenuClick: () -> Unit) {
     val factory = ChatViewModelFactory(LocalContext.current.applicationContext as Application)
     val viewModel: ChatViewModel = viewModel(factory = factory)
     val chatHistory by viewModel.chatHistory.collectAsState()
@@ -57,10 +61,10 @@ fun ChatScreen(navController: NavController, mainViewModel: MainViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ModelSelectionButton(viewModel = mainViewModel)
-            Button(onClick = { navController.navigate("settings") }) {
-                Text("Settings")
+            IconButton(onClick = onMenuClick) {
+                Icon(Icons.Default.Menu, contentDescription = "Menu")
             }
+            ModelSelectionButton(viewModel = mainViewModel)
         }
         Spacer(modifier = Modifier.height(8.dp))
         LazyColumn(

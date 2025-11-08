@@ -6,9 +6,9 @@ import retrofit2.http.POST
 
 @kotlinx.serialization.InternalSerializationApi
 interface OpenAiApi {
-    @POST("chat/completions")
+    @POST("api/v1/chat/completions")
     suspend fun getChatCompletion(@Body request: ChatRequest): ChatResponse
 
-    @GET("models")
+    @GET("api/v1/models/list")
     suspend fun getModels(): ModelsResponse
 }
