@@ -4,22 +4,22 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.openwebuieink.db.AppDatabase
-import com.example.openwebuieink.db.Settings
+import com.example.openwebuieink.data.ConnectionProfile
 import com.example.openwebuieink.network.Chat
 import com.example.openwebuieink.network.ChatRepository
 import com.example.openwebuieink.network.Model
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(application: Application, private val settingsViewModel: SettingsViewModel) : AndroidViewModel(application) {
 
-    private val settingsDao = AppDatabase.getDatabase(application).settingsDao()
     private val chatRepository = ChatRepository()
 
-    val settings = settingsDao.getSettings()
+    val selectedConnectionProfile = settingsViewModel.selectedConnectionProfile
 
     private val _models = MutableStateFlow<List<Model>>(emptyList())
     val models: StateFlow<List<Model>> = _models.asStateFlow()
@@ -31,24 +31,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val chats: StateFlow<List<Chat>> = _chats.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            settings.collect { settings ->
-                if (settings != null) {
-                    getModels(settings)
-                    getChats(settings)
-                }
+        settingsViewModel.selectedConnectionProfile.onEach { profile ->
+            if (profile != null) {
+                getModels(profile)
+                getChats(profile)
             }
-        }
+        }.launchIn(viewModelScope)
     }
 
-    fun getModels(settings: Settings) {
+    fun getModels(profile: ConnectionProfile) {
         viewModelScope.launch {
             try {
-                val response = chatRepository.getModels(settings)
+                val response = chatRepository.getModels(profile.baseUrl, profile.apiKey)
                 _models.value = response.data
-                if (_selectedModel.value == null && settings.defaultModel.isNotEmpty()) {
-                    _selectedModel.value = response.data.find { it.id == settings.defaultModel }
-                }
                 if (_selectedModel.value == null && response.data.isNotEmpty()) {
                     _selectedModel.value = response.data.first()
                 }
@@ -58,10 +53,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getChats(settings: Settings) {
+    fun getChats(profile: ConnectionProfile) {
         viewModelScope.launch {
             try {
-                _chats.value = chatRepository.getChats(settings)
+                _chats.value = chatRepository.getChats(profile.baseUrl, profile.apiKey)
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Failed to get chats", e)
             }

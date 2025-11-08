@@ -24,16 +24,16 @@ import androidx.navigation.NavController
 
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = viewModel()) {
-    val settings by viewModel.settings.collectAsState()
-    var apiEndpoint by remember { mutableStateOf("") }
+    val selectedProfile by viewModel.selectedConnectionProfile.collectAsState()
+    var name by remember { mutableStateOf("") }
+    var baseUrl by remember { mutableStateOf("") }
     var apiKey by remember { mutableStateOf("") }
-    var defaultModel by remember { mutableStateOf("") }
 
-    LaunchedEffect(settings) {
-        settings?.let {
-            apiEndpoint = it.apiEndpoint
-            apiKey = it.apiKey
-            defaultModel = it.defaultModel
+    LaunchedEffect(selectedProfile) {
+        selectedProfile?.let {
+            name = it.name
+            baseUrl = it.baseUrl
+            apiKey = it.apiKey ?: ""
         }
     }
 
@@ -44,32 +44,38 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
         verticalArrangement = Arrangement.Center
     ) {
         TextField(
-            value = apiEndpoint,
-            onValueChange = { apiEndpoint = it },
-            label = { Text("API Endpoint") },
-            modifier = Modifier.fillMaxWidth()
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Name") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = selectedProfile != null
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        TextField(
+            value = baseUrl,
+            onValueChange = { baseUrl = it },
+            label = { Text("Base URL") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = selectedProfile != null
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
             value = apiKey,
             onValueChange = { apiKey = it },
-            label = { Text("API Key") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        TextField(
-            value = defaultModel,
-            onValueChange = { defaultModel = it },
-            label = { Text("Default Model") },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("API Key (Optional)") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = selectedProfile != null
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                viewModel.saveSettings(apiEndpoint, apiKey, defaultModel)
+                selectedProfile?.let {
+                    viewModel.updateConnectionProfile(it.copy(name = name, baseUrl = baseUrl, apiKey = apiKey))
+                }
                 navController.popBackStack()
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = selectedProfile != null
         ) {
             Text("Save")
         }

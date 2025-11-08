@@ -40,17 +40,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.openwebuieink.ui.ChatScreen
+import com.example.openwebuieink.ui.ConnectionProfileSwitcher
 import com.example.openwebuieink.ui.MainViewModel
 import com.example.openwebuieink.ui.SettingsScreen
+import com.example.openwebuieink.ui.SettingsViewModel
 import com.example.openwebuieink.ui.theme.OpenwebuiEinkTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
+    private val settingsViewModel: SettingsViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return MainViewModel(application) as T
+                return MainViewModel(application, settingsViewModel) as T
             }
         }
     }
@@ -60,14 +63,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OpenwebuiEinkTheme {
-                AppNavigation(mainViewModel)
+                AppNavigation(mainViewModel, settingsViewModel)
             }
         }
     }
 }
 
 @Composable
-fun AppNavigation(mainViewModel: MainViewModel) {
+fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewModel) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -77,6 +80,7 @@ fun AppNavigation(mainViewModel: MainViewModel) {
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
+                ConnectionProfileSwitcher(settingsViewModel = settingsViewModel)
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Add, contentDescription = "New Chat") },
                     label = { Text(text = "New Chat") },
@@ -110,7 +114,7 @@ fun AppNavigation(mainViewModel: MainViewModel) {
     ) {
         NavHost(navController = navController, startDestination = "chat") {
             composable("chat") { ChatScreen(navController, mainViewModel) { scope.launch { drawerState.open() } } }
-            composable("settings") { SettingsScreen(navController) }
+            composable("settings") { SettingsScreen(navController, settingsViewModel) }
         }
     }
 }
