@@ -1,6 +1,7 @@
 package com.example.openwebuieink.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.openwebuieink.db.AppDatabase
@@ -29,15 +30,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val response = chatRepository.getModels(settings)
-                _models.value = response.models
+                _models.value = response.data
                 if (_selectedModel.value == null && settings.defaultModel.isNotEmpty()) {
-                    _selectedModel.value = response.models.find { it.id == settings.defaultModel }
+                    _selectedModel.value = response.data.find { it.id == settings.defaultModel }
                 }
-                if (_selectedModel.value == null && response.models.isNotEmpty()) {
-                    _selectedModel.value = response.models.first()
+                if (_selectedModel.value == null && response.data.isNotEmpty()) {
+                    _selectedModel.value = response.data.first()
                 }
             } catch (e: Exception) {
-                // Handle error
+                Log.e("MainViewModel", "Failed to get models", e)
             }
         }
     }

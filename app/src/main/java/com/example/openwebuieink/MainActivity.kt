@@ -9,13 +9,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -97,7 +101,7 @@ fun ModelSelectionButton(viewModel: MainViewModel) {
             .clickable { showDialog.value = true },
         contentAlignment = Alignment.Center
     ) {
-        Text(text = selectedModel?.id ?: "Select Model")
+        Text(text = selectedModel?.name ?: "Select Model")
     }
 
     if (showDialog.value) {
@@ -112,17 +116,21 @@ fun ModelSelectionDialog(viewModel: MainViewModel, onDismiss: () -> Unit) {
     val models by viewModel.models.collectAsState()
 
     Dialog(onDismissRequest = onDismiss) {
-        models.forEach { model ->
-            Text(
-                text = model.id,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        viewModel.selectModel(model)
-                        onDismiss()
-                    }
-                    .padding(16.dp)
-            )
+        Surface(color = MaterialTheme.colorScheme.surface) {
+            LazyColumn {
+                items(models) { model ->
+                    Text(
+                        text = model.name,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.selectModel(model)
+                                onDismiss()
+                            }
+                            .padding(16.dp)
+                    )
+                }
+            }
         }
     }
 }
