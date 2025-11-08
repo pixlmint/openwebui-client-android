@@ -1,17 +1,21 @@
 package com.example.openwebuieink.ui
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.openwebuieink.db.AppDatabase
 import com.example.openwebuieink.network.ChatMessage
 import com.example.openwebuieink.network.ChatRequest
 import com.example.openwebuieink.network.ChatRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class ChatViewModel : ViewModel() {
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = ChatRepository()
+    private val settingsDao = AppDatabase.getDatabase(application).settingsDao()
 
     private val _chatHistory = MutableStateFlow<List<ChatMessage>>(emptyList())
     val chatHistory: StateFlow<List<ChatMessage>> = _chatHistory
@@ -21,13 +25,20 @@ class ChatViewModel : ViewModel() {
         _chatHistory.value = _chatHistory.value + userMessage
 
         viewModelScope.launch {
+            val settings = settingsDao.getSettings().first()
+            if (settings == null) {
+                val errorMessage = ChatMessage(role = "assistant", content = "Error: Please configure the API settings first.")
+                _chatHistory.value = _chatHistory.value + errorMessage
+                return@launch
+            }
+
             val request = ChatRequest(
-                model = "gpt-3.5-turbo", // Or your desired model
+                model = settings.defaultModel,
                 messages = _chatHistory.value
             )
 
             try {
-                val response = repository.getChatCompletion(request)
+                val response = repository.getChatCompletion(settings, request)
                 val assistantMessage = response.choices.first().message
                 _chatHistory.value = _chatHistory.value + assistantMessage
             } catch (e: Exception) {
