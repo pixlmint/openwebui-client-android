@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,10 +29,12 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
     var apiKey by remember { mutableStateOf("") }
     var defaultModel by remember { mutableStateOf("") }
 
-    settings?.let {
-        apiEndpoint = it.apiEndpoint
-        apiKey = it.apiKey
-        defaultModel = it.defaultModel
+    LaunchedEffect(settings) {
+        settings?.let {
+            apiEndpoint = it.apiEndpoint
+            apiKey = it.apiKey
+            defaultModel = it.defaultModel
+        }
     }
 
     Column(
