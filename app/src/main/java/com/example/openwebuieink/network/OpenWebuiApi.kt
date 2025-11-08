@@ -5,7 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 
 @kotlinx.serialization.InternalSerializationApi
-interface OpenAiApi {
+interface OpenWebuiApi {
     @POST("api/v1/chat/completions")
     suspend fun getChatCompletion(@Body request: ChatRequest): ChatResponse
 

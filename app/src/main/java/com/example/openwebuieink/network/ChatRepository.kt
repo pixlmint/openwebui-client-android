@@ -33,7 +33,7 @@ class ChatRepository {
             .build()
     }
 
-    private fun getApi(settings: Settings): OpenAiApi {
+    private fun getApi(settings: Settings): OpenWebuiApi {
         val contentType = "application/json".toMediaType()
         val json = Json { ignoreUnknownKeys = true }
 
@@ -43,7 +43,7 @@ class ChatRepository {
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
 
-        return retrofit.create(OpenAiApi::class.java)
+        return retrofit.create(OpenWebuiApi::class.java)
     }
 
     suspend fun getChatCompletion(settings: Settings, request: ChatRequest): ChatResponse {
