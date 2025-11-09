@@ -70,6 +70,24 @@ Authorization: Bearer {{apikey}}
   "stream": false
 }
 
+### stream completion
+POST {{host}}/api/v1/chat/completions
+Content-Type: application/json
+Authorization: Bearer {{apikey}}
+
+{
+  "chat_id": "0ede72a1-4e66-4520-9105-1c38",
+  "model": "openai/gpt-oss-20b",
+  "id": "assistant-msg-id-b5dd1ccc-ba5c-4f69-8c87-602000",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello world"
+    }
+  ],
+  "stream": true
+}
+
 ### mark completed
 POST {{host}}/api/chat/completed
 Content-Type: application/json
@@ -81,3 +99,20 @@ Authorization: Bearer {{apikey}}
   "model": "openai/gpt-oss-20b",
   "session_id": "my-awesome-session-id"
 }
+
+### title generation
+POST {{host}}/api/v1/tasks/title/completions
+Content-Type: application/json
+Authorization: Bearer {{apikey}}
+
+{
+  "chat_id": "0ede72a1-4e66-4520-9105-1c38d6377db0",
+  "model": "openai/gpt-oss-20b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello world"
+    }
+  ]
+}
+
