@@ -33,4 +33,7 @@ interface OpenWebuiApi {
 
     @POST("api/chat/completed")
     suspend fun completeChat(@Body request: ChatCompletedRequest)
+
+    @POST("api/v1/tasks/title/completions")
+    suspend fun generateTitle(@Body request: ChatCompletionsRequest): TaskResponse
 }

@@ -107,3 +107,14 @@ data class MinimalMessage(
     val models: List<String>? = null,
     val model: String? = null,
 )
+
+@kotlinx.serialization.InternalSerializationApi
+@Serializable
+data class TaskResponse(
+    val id: String,
+    @SerialName("object") val obj: String,
+    val created: Long,
+    val model: String,
+    val choices: List<TaskChoice>,
+    val usage: UsageStats
+)

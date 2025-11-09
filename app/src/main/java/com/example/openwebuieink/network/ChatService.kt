@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
@@ -37,7 +38,6 @@ class ChatService(private val repository: ChatRepository) {
         val assistantMessageId = "assistant-msg-${UUID.randomUUID()}"
         val currentSession = "session-${UUID.randomUUID()}"
         var assistantMessage: Message? = null
-        var updatedChat: Chat? = null
 
         streamChatCompletion(profile, currentChat, assistantMessageId, currentSession, modelId)
             .onEach {
@@ -45,13 +45,48 @@ class ChatService(private val repository: ChatRepository) {
             }
             .collect {
                 assistantMessage = it.messages.last()
-                updatedChat = it
-                emit(updatedChat)
+                emit(it)
             }
 
-        updateChatWithMessage(profile, currentChat, assistantMessage!!);
+        val updatedChat = updateChatWithMessage(profile, currentChat, assistantMessage!!);
 
-        completeChat(profile, updatedChat!!, assistantMessageId, currentSession, modelId)
+        completeChat(profile, updatedChat, assistantMessageId, currentSession, modelId)
+    }
+
+    private suspend fun generateChatTitle(profile: ConnectionProfile, chat: Chat): String {
+        val titleRequest = ChatCompletionsRequest(
+            chatId = chat.id!!,
+            id = "title-gen-${UUID.randomUUID()}",
+            messages = chat.messages.map {
+                ChatCompletionMessage(
+                    role = it.role,
+                    content = it.content
+                )
+            },
+            model = chat.models[0],
+            stream = false,
+            sessionId = "session-${UUID.randomUUID()}"
+        )
+
+        val response = repository.generateTitle(profile.baseUrl, profile.apiKey, titleRequest)
+
+        @Serializable
+        @InternalSerializationApi
+        data class TaskContent(
+            val title: String
+        )
+
+        try {
+            var taskContentStr = response.choices.first().message.content
+            taskContentStr = taskContentStr.replace('\"', '"')
+
+            val content = Json.decodeFromString<TaskContent>(taskContentStr)
+
+            return content.title
+        } catch (e: Exception) {
+            Log.e("ChatService", "Error parsing response: $response", e)
+            return "Error generating Title"
+        }
     }
 
     private suspend fun createNewChat(
@@ -94,6 +129,9 @@ class ChatService(private val repository: ChatRepository) {
             messages = updatedMessages,
             history = updatedHistory
         )
+        if (updatedChat.title == "New Chat") {
+            updatedChat.title = generateChatTitle(profile, updatedChat)
+        }
         val req = ChatUpdateRequest(chat = updatedChat)
         repository.updateChat(profile.baseUrl, profile.apiKey, chat.id!!, req)
         return updatedChat

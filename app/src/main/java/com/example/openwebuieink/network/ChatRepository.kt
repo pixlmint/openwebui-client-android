@@ -102,6 +102,10 @@ class ChatRepository {
         return getApi(baseUrl, apiKey).getChatCompletions(request)
     }
 
+    suspend fun generateTitle(baseUrl: String, apiKey: String?, request: ChatCompletionsRequest): TaskResponse {
+        return getApi(baseUrl, apiKey).generateTitle(request)
+    }
+
     suspend fun streamChatCompletions(
         baseUrl: String,
         apiKey: String?,

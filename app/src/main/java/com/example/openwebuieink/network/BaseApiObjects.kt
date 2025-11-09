@@ -81,6 +81,14 @@ data class KnowledgeFile(
 
 @kotlinx.serialization.InternalSerializationApi
 @Serializable
+data class UsageStats(
+    @SerialName("prompt_tokens") val promptTokens: Int,
+    @SerialName("completion_tokens") val completionTokens: Int,
+    @SerialName("total_tokens") val totalTokens: Int,
+)
+
+@kotlinx.serialization.InternalSerializationApi
+@Serializable
 data class ListChat(
     val id: String,
     @SerialName("title")
@@ -90,3 +98,11 @@ data class ListChat(
     @SerialName("created_at")
     val createdAt: Long
 )
+
+@kotlinx.serialization.InternalSerializationApi
+@Serializable
+data class TaskChoice(
+    val index: Int,
+    val message: Message
+)
+
