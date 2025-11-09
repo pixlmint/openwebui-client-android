@@ -118,7 +118,7 @@ fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewM
         }
     ) {
         NavHost(navController = navController, startDestination = "chat") {
-            composable("chat") { ChatScreen(navController, mainViewModel) { scope.launch { drawerState.open() } } }
+            composable("chat") { ChatScreen(mainViewModel) { scope.launch { drawerState.open() } } }
             composable("settings") { SettingsScreen(navController, settingsViewModel) }
         }
     }

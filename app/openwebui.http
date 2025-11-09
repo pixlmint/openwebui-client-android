@@ -1,15 +1,83 @@
-###
+### models
 GET {{host}}/api/v1/models
 Authorization: Bearer {{apikey}}
 
-###
+### create
 POST {{host}}/api/v1/chats/new
+Content-Type: application/json
 Authorization: Bearer {{apikey}}
 
-{"chat": {}, "folder_id": ""}
+{
+  "chat": {
+    "title": "New Chat",
+    "models": [
+      "gaming/openai/gpt-oss-20b"
+    ],
+    "messages": [
+      {
+        "id": "user-msg-id",
+        "role": "user",
+        "content": "Hello world",
+        "timestamp": 1762685118,
+        "models": [
+          "gaming/openai/gpt-oss-20b"
+        ]
+      }
+    ]
+  },
+  "history": {
+    "current_id": "user-msg-id-asdfasdfasdfasdf",
+    "messages": {
+      "user-msg-id-asdfasdfasdfasdf": {
+        "id": "user-msg-id-asdfasdfasdfasdf",
+        "role": "user",
+        "content": "Hello world",
+        "timestamp": 1762685118,
+        "models": [
+          "gaming/openai/gpt-oss-20b"
+        ]
+      }
+    }
+  }
+}
 
-###
+### completion
 POST {{host}}/api/v1/chat/completions
+Content-Type: application/json
 Authorization: Bearer {{apikey}}
 
-{"model": "openai/gpt-oss-20b", "id": "b5dd1ccc-ba5c-4f69-8c87-60c58e8dc6ca", "messages": [{"role": "user","content": "Hello world"}], "stream": false}
+{
+  "chat_id": "0ede72a1-4e66-4520-9105-1c38d6377db0",
+  "model": "openai/gpt-oss-20b",
+  "id": "assistant-msg-id-b5dd1ccc-ba5c-4f69-8c87-60c58e8dc6ca",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello world"
+    }
+  ],
+  "background_tasks": {
+    "title_generation": false,
+    "tags_generation": false,
+    "follow_up_generation": false
+  },
+  "features": {
+    "code_interpreter": false,
+    "web_search": false,
+    "image_generation": false,
+    "memory": false
+  },
+  "stream": false
+}
+
+### mark completed
+POST {{host}}/api/chat/completed
+Content-Type: application/json
+Authorization: Bearer {{apikey}}
+
+{
+  "chat_id": "0ede72a1-4e66-4520-9105-1c38d6377db0",
+  "id": "assistant-msg-id-b5dd1ccc-ba5c-4f69-8c87-60c58e8dc6ca",
+  "model": "openai/gpt-oss-20b",
+  "session_id": "my-awesome-session-id"
+}

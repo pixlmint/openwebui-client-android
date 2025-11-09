@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.openwebuieink.data.ConnectionProfile
 import com.example.openwebuieink.network.Chat
 import com.example.openwebuieink.network.ChatRepository
+import com.example.openwebuieink.network.ListChat
 import com.example.openwebuieink.network.Model
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,8 +30,8 @@ class MainViewModel(application: Application, private val settingsViewModel: Set
     private val _selectedModel = MutableStateFlow<Model?>(null)
     val selectedModel: StateFlow<Model?> = _selectedModel.asStateFlow()
 
-    private val _chats = MutableStateFlow<List<Chat>>(emptyList())
-    val chats: StateFlow<List<Chat>> = _chats.asStateFlow()
+    private val _chats = MutableStateFlow<List<ListChat>>(emptyList())
+    val chats: StateFlow<List<ListChat>> = _chats.asStateFlow()
 
     private val _clearChatEvent = MutableSharedFlow<Unit>()
     val clearChatEvent = _clearChatEvent.asSharedFlow()
