@@ -47,4 +47,8 @@ class ChatViewModel(application: Application, private val mainViewModel: MainVie
             }
         }
     }
+
+    fun clearChat() {
+        _chatHistory.value = emptyList()
+    }
 }

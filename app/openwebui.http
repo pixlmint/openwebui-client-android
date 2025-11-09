@@ -1,0 +1,15 @@
+###
+GET {{host}}/api/v1/models
+Authorization: Bearer {{apikey}}
+
+###
+POST {{host}}/api/v1/chats/new
+Authorization: Bearer {{apikey}}
+
+{"chat": {}, "folder_id": ""}
+
+###
+POST {{host}}/api/v1/chat/completions
+Authorization: Bearer {{apikey}}
+
+{"model": "openai/gpt-oss-20b", "id": "b5dd1ccc-ba5c-4f69-8c87-60c58e8dc6ca", "messages": [{"role": "user","content": "Hello world"}], "stream": false}

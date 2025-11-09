@@ -8,8 +8,10 @@ import com.example.openwebuieink.data.ConnectionProfile
 import com.example.openwebuieink.network.Chat
 import com.example.openwebuieink.network.ChatRepository
 import com.example.openwebuieink.network.Model
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -29,6 +31,9 @@ class MainViewModel(application: Application, private val settingsViewModel: Set
 
     private val _chats = MutableStateFlow<List<Chat>>(emptyList())
     val chats: StateFlow<List<Chat>> = _chats.asStateFlow()
+
+    private val _clearChatEvent = MutableSharedFlow<Unit>()
+    val clearChatEvent = _clearChatEvent.asSharedFlow()
 
     init {
         settingsViewModel.selectedConnectionProfile.onEach { profile ->
@@ -60,6 +65,12 @@ class MainViewModel(application: Application, private val settingsViewModel: Set
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Failed to get chats", e)
             }
+        }
+    }
+
+    fun clearChat() {
+        viewModelScope.launch {
+            _clearChatEvent.emit(Unit)
         }
     }
 

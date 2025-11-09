@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.openwebuieink.ModelSelectionButton
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 @Composable
 fun ChatScreen(navController: NavController, mainViewModel: MainViewModel, onMenuClick: () -> Unit) {
@@ -42,6 +45,12 @@ fun ChatScreen(navController: NavController, mainViewModel: MainViewModel, onMen
     val chatHistory by viewModel.chatHistory.collectAsState()
     var message by remember { mutableStateOf("") }
     val selectedModel by mainViewModel.selectedModel.collectAsState()
+
+    LaunchedEffect(mainViewModel) {
+        mainViewModel.clearChatEvent.onEach {
+            viewModel.clearChat()
+        }.launchIn(this)
+    }
 
     Column(
         modifier = Modifier

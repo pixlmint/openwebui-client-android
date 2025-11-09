@@ -85,7 +85,12 @@ fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewM
                     icon = { Icon(Icons.Default.Add, contentDescription = "New Chat") },
                     label = { Text(text = "New Chat") },
                     selected = false,
-                    onClick = { /* TODO */ }
+                    onClick = { 
+                        scope.launch {
+                            mainViewModel.clearChat()
+                            drawerState.close()
+                        }
+                     }
                 )
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
@@ -152,10 +157,10 @@ fun ModelSelectionDialog(viewModel: MainViewModel, onDismiss: () -> Unit) {
                         text = model.name,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
+                            .clickable { 
                                 viewModel.selectModel(model)
                                 onDismiss()
-                            }
+                             }
                             .padding(16.dp)
                     )
                 }
