@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONArray
 import org.json.JSONException
@@ -15,9 +16,14 @@ import java.util.concurrent.TimeUnit
 
 class ChatRepository {
 
-    private fun getClient(apiKey: String?): OkHttpClient {
+    private fun getClient(apiKey: String?, fullLogging: Boolean = true): OkHttpClient {
+        val httpLogLevel = if (fullLogging) {
+            HttpLoggingInterceptor.Level.BODY
+        } else {
+            HttpLoggingInterceptor.Level.HEADERS
+        }
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = httpLogLevel
         }
 
         val errorJsonInterceptor = Interceptor { chain ->
@@ -60,54 +66,54 @@ class ChatRepository {
             .build()
     }
 
-    @kotlinx.serialization.InternalSerializationApi
-    private fun getApi(baseUrl: String, apiKey: String?): OpenWebuiApi {
+    private fun getApi(baseUrl: String, apiKey: String?, fullLogging: Boolean = true): OpenWebuiApi {
         val contentType = "application/json".toMediaType()
-        val json = Json { 
+        val json = Json {
             ignoreUnknownKeys = true
             encodeDefaults = true
         }
 
         val retrofit = Retrofit.Builder()
             .baseUrl(baseUrl)
-            .client(getClient(apiKey))
+            .client(getClient(apiKey, fullLogging))
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
 
         return retrofit.create(OpenWebuiApi::class.java)
     }
 
-    @kotlinx.serialization.InternalSerializationApi
     suspend fun getModels(baseUrl: String, apiKey: String?): ModelsResponse {
         return getApi(baseUrl, apiKey).getModels()
     }
 
-    @kotlinx.serialization.InternalSerializationApi
     suspend fun getChats(baseUrl: String, apiKey: String?): List<ListChat> {
         return getApi(baseUrl, apiKey).getChats()
     }
 
-    @kotlinx.serialization.InternalSerializationApi
     suspend fun createChat(baseUrl: String, apiKey: String?, chat: CreateChatRequest): CreateChatResponse {
         return getApi(baseUrl, apiKey).createChat(chat)
     }
 
-    @kotlinx.serialization.InternalSerializationApi
     suspend fun updateChat(baseUrl: String, apiKey: String?, chatId: String, req: ChatUpdateRequest): ChatUpdateResponse {
         return getApi(baseUrl, apiKey).updateChat(chatId, req)
     }
 
-    @kotlinx.serialization.InternalSerializationApi
     suspend fun getChatCompletions(baseUrl: String, apiKey: String?, request: ChatCompletionsRequest): ChatCompletionsResponse {
         return getApi(baseUrl, apiKey).getChatCompletions(request)
     }
 
-    @kotlinx.serialization.InternalSerializationApi
+    suspend fun streamChatCompletions(
+        baseUrl: String,
+        apiKey: String?,
+        request: ChatCompletionsRequest
+    ): ResponseBody {
+        return getApi(baseUrl, apiKey, false).streamChatCompletions(request)
+    }
+
     suspend fun getUpdateChat(baseUrl: String, apiKey: String?, chatId: String): ChatUpdateResponse {
         return getApi(baseUrl, apiKey).getUpdateChat(chatId)
     }
 
-    @kotlinx.serialization.InternalSerializationApi
     suspend fun completeChat(baseUrl: String, apiKey: String?, request: ChatCompletedRequest) {
         getApi(baseUrl, apiKey).completeChat(request)
     }

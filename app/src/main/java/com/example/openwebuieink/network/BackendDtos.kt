@@ -30,7 +30,7 @@ data class ChatCompletionsRequest(
     val id: String,
     val messages: List<ChatCompletionMessage>,
     val model: String,
-    val stream: Boolean = false,
+    val stream: Boolean,
     @SerialName("background_tasks") val backgroundTasks: BackgroundTasks? = null,
     val features: Features? = null,
     val variables: Map<String, String>? = null,

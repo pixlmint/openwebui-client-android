@@ -1,12 +1,13 @@
 package com.example.openwebuieink.network
 
+import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Streaming
 
-@kotlinx.serialization.InternalSerializationApi
 interface OpenWebuiApi {
     @GET("api/v1/models")
     suspend fun getModels(@Query("refresh") refresh: Boolean = false): ModelsResponse
@@ -25,6 +26,10 @@ interface OpenWebuiApi {
 
     @POST("api/chat/completions")
     suspend fun getChatCompletions(@Body request: ChatCompletionsRequest): ChatCompletionsResponse
+
+    @Streaming
+    @POST("openai/chat/completions?bypass_filter=false")
+    suspend fun streamChatCompletions(@Body request: ChatCompletionsRequest): ResponseBody
 
     @POST("api/chat/completed")
     suspend fun completeChat(@Body request: ChatCompletedRequest)

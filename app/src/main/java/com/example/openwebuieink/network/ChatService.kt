@@ -3,22 +3,21 @@ package com.example.openwebuieink.network
 import android.util.Log
 import com.example.openwebuieink.data.ConnectionProfile
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.json.Json
 import java.util.UUID
 
 class ChatService(private val repository: ChatRepository) {
 
-    private companion object {
-        private const val MAX_REFRESHES = 30
-        private const val REFRESH_INTERVAL = 2000L
-    }
-
-    @kotlinx.serialization.InternalSerializationApi
-    suspend fun sendMessage(
+    fun sendMessage(
         profile: ConnectionProfile,
         chat: Chat?,
         message: String,
         modelId: String
-    ): Pair<Chat, String?> {
+    ): Flow<Chat> = flow {
         val userMessageId = "user-msg-${UUID.randomUUID()}"
         val userMessage = Message(
             id = userMessageId,
@@ -33,28 +32,28 @@ class ChatService(private val repository: ChatRepository) {
         } else {
             updateChatWithMessage(profile, chat, userMessage)
         }
+        emit(currentChat)
 
         val assistantMessageId = "assistant-msg-${UUID.randomUUID()}"
         val currentSession = "session-${UUID.randomUUID()}"
+        var assistantMessage: Message? = null
+        var updatedChat: Chat? = null
 
-        val task = triggerAssistantCompletion(
-            profile,
-            currentChat,
-            assistantMessageId,
-            currentSession,
-            modelId,
-            message
-        )
+        streamChatCompletion(profile, currentChat, assistantMessageId, currentSession, modelId)
+            .onEach {
+                emit(it)
+            }
+            .collect {
+                assistantMessage = it.messages.last()
+                updatedChat = it
+                emit(updatedChat)
+            }
 
-        if (task.status) {
-            val updatedChat = pollForChatCompletion(profile, currentChat)
-            completeChat(profile, updatedChat, assistantMessageId, currentSession, modelId)
-            return Pair(updatedChat, task.taskId)
-        }
-        return Pair(currentChat, null)
+        updateChatWithMessage(profile, currentChat, assistantMessage!!);
+
+        completeChat(profile, updatedChat!!, assistantMessageId, currentSession, modelId)
     }
 
-    @kotlinx.serialization.InternalSerializationApi
     private suspend fun createNewChat(
         profile: ConnectionProfile,
         userMessage: Message,
@@ -100,18 +99,15 @@ class ChatService(private val repository: ChatRepository) {
         return updatedChat
     }
 
-    @kotlinx.serialization.InternalSerializationApi
-    private suspend fun triggerAssistantCompletion(
+    private fun streamChatCompletion(
         profile: ConnectionProfile,
         chat: Chat,
         assistantMessageId: String,
         sessionId: String,
         modelId: String,
-        userMessage: String,
-    ): ChatCompletionsResponse {
+    ): Flow<Chat> = flow {
         val completionsMessages =
-            chat.messages.map { ChatCompletionMessage(role = it.role, content = it.content) } +
-                    ChatCompletionMessage(role = "user", content = userMessage)
+            chat.messages.map { ChatCompletionMessage(role = it.role, content = it.content) }
 
         val chatCompletionsRequest = ChatCompletionsRequest(
             chatId = chat.id!!,
@@ -119,57 +115,88 @@ class ChatService(private val repository: ChatRepository) {
             messages = completionsMessages,
             model = modelId,
             sessionId = sessionId,
-            stream = false,
+            stream = true,
         )
-        return repository.getChatCompletions(
+
+        val responseBody = repository.streamChatCompletions(
             profile.baseUrl,
             profile.apiKey,
             chatCompletionsRequest
         )
+
+        val source = responseBody.source()
+        var assistantMessage = ""
+        var lastEmitTime = 0L
+        val emitInterval = 2000L // 2 seconds
+
+        try {
+            while (!source.exhausted()) {
+                val line = source.readUtf8Line()
+                Log.d("ChatService", "Received line: $line")
+                if (line != null && line.startsWith("data:") && !line.endsWith("[DONE]")) {
+                    val json = line.removePrefix("data:").trim()
+                    if (json.isNotEmpty()) {
+                        try {
+                            val chunk = Json.decodeFromString<StreamingChatCompletionChunk>(json)
+                            chunk.choices.firstOrNull()?.delta?.content?.let {
+                                assistantMessage += it
+                            }
+
+                            val currentTime = System.currentTimeMillis()
+                            if (currentTime - lastEmitTime >= emitInterval) {
+                                val updatedChat = handleUpdateChat(assistantMessageId, assistantMessage, modelId, chat)
+
+                                emit(updatedChat)
+                                lastEmitTime = currentTime
+                                delay(100)
+                            }
+                        } catch (e: Exception) {
+                            Log.e("ChatService", "Error parsing chunk: $json", e)
+                        }
+                    }
+                }
+            }
+            emit(handleUpdateChat(assistantMessageId, assistantMessage, modelId, chat))
+        } catch (e: Exception) {
+            Log.e("ChatService", "Error streaming chat completion", e)
+            throw e
+        } finally {
+            Log.d("ChatService", "Closing response body")
+            responseBody.close()
+        }
     }
 
-    private suspend fun pollForChatCompletion(
-        profile: ConnectionProfile,
+    @InternalSerializationApi
+    private fun handleUpdateChat(
+        assistantMessageId: String,
+        assistantMessage: String,
+        modelId: String,
         chat: Chat
     ): Chat {
-        var updatedChat = chat
-        for (i in 0 until MAX_REFRESHES) {
-            Log.d("ChatService", "Fetching chat completion (${i + 1} / $MAX_REFRESHES)")
-            val remoteChatUpdate = repository.getUpdateChat(profile.baseUrl, profile.apiKey, chat.id!!)
-            if (remoteChatUpdate.chat.history.messages.size > updatedChat.history.messages.size) {
-                val assistantMsgId = remoteChatUpdate.chat.history.currentId
-                val assistantMsg = remoteChatUpdate.chat.history.messages[assistantMsgId]!!
-                val userMsg = remoteChatUpdate.chat.messages.last()
-                userMsg.childrenIds += assistantMsgId
+        val newMsg = Message(
+            id = assistantMessageId,
+            role = "assistant",
+            content = assistantMessage, // Updated content
+            timestamp = System.currentTimeMillis() / 1000,
+            model = modelId,
+            parentId = chat.history.currentId,
+        )
 
-                val newMsg = Message(
-                    id = assistantMsgId,
-                    role = "assistant",
-                    content = assistantMsg.content,
-                    timestamp = System.currentTimeMillis() / 1000,
-                    model = assistantMsg.model,
-                    parentId = userMsg.id,
-                )
-                val newMessages = updatedChat.messages + newMsg
-                val newHistoryMessages = updatedChat.history.messages.toMutableMap()
-                newHistoryMessages[assistantMsgId] = newMsg
-                updatedChat = updatedChat.copy(
-                    messages = newMessages,
-                    history = updatedChat.history.copy(
-                        currentId = assistantMsgId,
-                        messages = newHistoryMessages
-                    )
-                )
-                val updateRequest = ChatUpdateRequest(chat = updatedChat)
-                repository.updateChat(profile.baseUrl, profile.apiKey, updatedChat.id!!, updateRequest)
-                return updatedChat
-            }
-            delay(REFRESH_INTERVAL)
-        }
+        val newMessages =
+            chat.messages.filter { it.id != assistantMessageId } + newMsg
+        val newHistoryMessages = chat.history.messages.toMutableMap()
+        newHistoryMessages[assistantMessageId] = newMsg
+
+        val updatedChat = chat.copy(
+            messages = newMessages,
+            history = chat.history.copy(
+                currentId = assistantMessageId,
+                messages = newHistoryMessages
+            )
+        )
         return updatedChat
     }
 
-    @kotlinx.serialization.InternalSerializationApi
     private suspend fun completeChat(
         profile: ConnectionProfile,
         chat: Chat,
@@ -177,7 +204,6 @@ class ChatService(private val repository: ChatRepository) {
         sessionId: String,
         modelId: String
     ) {
-        val assistantMsg = chat.history.messages[assistantMsgId]!!
         val chatCompletedRequest = ChatCompletedRequest(
             chatId = chat.id!!,
             id = assistantMsgId,

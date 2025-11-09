@@ -11,7 +11,11 @@ import com.example.openwebuieink.network.Message
 import com.example.openwebuieink.network.Model
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class ChatViewModel(application: Application, private val mainViewModel: MainViewModel) :
@@ -34,20 +38,23 @@ class ChatViewModel(application: Application, private val mainViewModel: MainVie
                 return@launch
             val modelId = model?.id ?: return@launch // or a default model
 
-            try {
-                val (updatedChat, taskId) = chatService.sendMessage(
-                    profile,
-                    _chat.value,
-                    message,
-                    modelId
-                )
-                _chat.value = updatedChat
-                _chatHistory.value = updatedChat.messages
-            } catch (e: Exception) {
-                Log.e("ChatViewModel", "Error sending message: ${e.message}")
-                Log.e("ChatViewModel", e.stackTraceToString())
-                // Handle error
-            }
+            chatService.sendMessage(
+                profile,
+                _chat.value,
+                message,
+                modelId
+            )
+                .catch { e ->
+                    Log.e("ChatViewModel", "Error sending message: ${e.message}")
+                    Log.e("ChatViewModel", e.stackTraceToString())
+                    // Handle error
+                }.onEach { updatedChat ->
+                    _chat.value = updatedChat
+                    _chatHistory.value = updatedChat.messages
+                }.collect { updatedChat ->
+                    _chat.value = updatedChat
+                    _chatHistory.value = updatedChat.messages
+                }
         }
     }
 

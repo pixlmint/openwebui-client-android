@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 data class Message(
     val id: String? = null,
     val role: String,
-    val content: String,
+    var content: String,
     val timestamp: Long? = null,
     val models: List<String>? = null,
     val model: String? = null,
