@@ -102,15 +102,6 @@ fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewM
                         }
                      }
                 )
-//                NavigationDrawerItem(
-//                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-//                    label = { Text(text = "Settings") },
-//                    selected = false,
-//                    onClick = {
-//                        scope.launch { drawerState.close() }
-//                        navController.navigate("settings")
-//                    }
-//                )
                 LazyColumn {
                     items(chats) { chat ->
                         NavigationDrawerItem(
@@ -120,7 +111,6 @@ fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewM
                             onClick = {
                                 mainViewModel.setChat(chat)
                                 scope.launch { drawerState.close() }
-                                // navController.navigate("chat/${chat.id}")
                             }
                         )
                     }

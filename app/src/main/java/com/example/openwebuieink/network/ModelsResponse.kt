@@ -3,11 +3,13 @@ package com.example.openwebuieink.network
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@kotlinx.serialization.InternalSerializationApi
 @Serializable
 data class ModelsResponse(
     val data: List<Model>
 )
 
+@kotlinx.serialization.InternalSerializationApi
 @Serializable
 data class Model(
     val id: String,
@@ -26,6 +28,7 @@ data class Model(
     val tags: List<Map<String, String>>? = null // Assuming tags is a list of strings
 )
 
+@kotlinx.serialization.InternalSerializationApi
 @Serializable
 data class Pipe(
     val type: String

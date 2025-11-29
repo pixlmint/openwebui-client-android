@@ -1,6 +1,5 @@
 package com.example.openwebuieink.ui
 
-import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,13 +11,11 @@ import com.example.openwebuieink.network.Model
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-class ChatViewModel(application: Application, private val mainViewModel: MainViewModel) :
+class ChatViewModel(private val mainViewModel: MainViewModel) :
     ViewModel() {
 
     private val repository = ChatRepository()

@@ -1,6 +1,5 @@
 package com.example.openwebuieink.ui
 
-import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,20 +29,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.example.openwebuieink.ModelSelectionButton
-import com.example.openwebuieink.network.Message
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
 fun ChatScreen(mainViewModel: MainViewModel, onMenuClick: () -> Unit) {
     val factory =
-        ChatViewModelFactory(LocalContext.current.applicationContext as Application, mainViewModel)
+        ChatViewModelFactory(mainViewModel)
     val viewModel: ChatViewModel = viewModel(factory = factory)
     val chatHistory by viewModel.chatHistory.collectAsState()
     var message by remember { mutableStateOf("") }
