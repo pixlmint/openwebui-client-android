@@ -27,6 +27,12 @@ class ChatViewModel(private val mainViewModel: MainViewModel) :
     private val _chatHistory = MutableStateFlow<List<Message>>(emptyList())
     val chatHistory: StateFlow<List<Message>> = _chatHistory
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    private val _restoreMessage = MutableStateFlow<String?>(null)
+    val restoreMessage: StateFlow<String?> = _restoreMessage
+
     @kotlinx.serialization.InternalSerializationApi
     fun sendMessage(message: String, model: Model?) {
         viewModelScope.launch {
@@ -34,6 +40,10 @@ class ChatViewModel(private val mainViewModel: MainViewModel) :
                 ?: // Handle error: no profile selected
                 return@launch
             val modelId = model?.id ?: return@launch // or a default model
+
+            // Store original state for rollback on error
+            val originalChat = _chat.value
+            val originalHistory = _chatHistory.value
 
             chatService.sendMessage(
                 profile,
@@ -44,7 +54,15 @@ class ChatViewModel(private val mainViewModel: MainViewModel) :
                 .catch { e ->
                     Log.e("ChatViewModel", "Error sending message: ${e.message}")
                     Log.e("ChatViewModel", e.stackTraceToString())
-                    // Handle error
+
+                    // Rollback to original state
+                    _chat.value = originalChat
+                    _chatHistory.value = originalHistory
+
+                    // Restore the user's message to the input field
+                    _restoreMessage.value = message
+
+                    _errorMessage.value = "Error: ${e.message ?: "Unknown error occurred"}"
                 }.onEach { updatedChat ->
                     _chat.value = updatedChat
                     _chatHistory.value = updatedChat.messages
@@ -58,10 +76,18 @@ class ChatViewModel(private val mainViewModel: MainViewModel) :
     fun loadChat(chatToLoad: Chat) {
         _chat.value = chatToLoad
         _chatHistory.value = chatToLoad.messages
-    }
+}
 
     fun clearChat() {
         _chat.value = null
         _chatHistory.value = emptyList()
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
+    }
+
+    fun clearRestoreMessage() {
+        _restoreMessage.value = null
     }
 }
