@@ -25,6 +25,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +77,14 @@ fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewM
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val chats by mainViewModel.chats.collectAsState()
+    val selectedProfile by mainViewModel.selectedConnectionProfile.collectAsState()
+
+    // Reload chats when drawer opens
+    LaunchedEffect(drawerState.isOpen) {
+        if (drawerState.isOpen && selectedProfile != null) {
+            mainViewModel.getChats(selectedProfile!!)
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
