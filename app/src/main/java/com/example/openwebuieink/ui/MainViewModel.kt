@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -32,6 +33,9 @@ class MainViewModel(application: Application, private val settingsViewModel: Set
 
     private val _chats = MutableStateFlow<List<ListChat>>(emptyList())
     val chats: StateFlow<List<ListChat>> = _chats.asStateFlow()
+
+    private val _selectedChat = MutableStateFlow<Chat?>(null)
+    val selectedChat: StateFlow<Chat?> = _selectedChat.asStateFlow()
 
     private val _clearChatEvent = MutableSharedFlow<Unit>()
     val clearChatEvent = _clearChatEvent.asSharedFlow()
@@ -70,8 +74,24 @@ class MainViewModel(application: Application, private val settingsViewModel: Set
     }
 
     fun clearChat() {
+        _selectedChat.value = null
         viewModelScope.launch {
             _clearChatEvent.emit(Unit)
+        }
+    }
+
+    @kotlinx.serialization.InternalSerializationApi
+    fun setChat(listChat: ListChat) {
+        viewModelScope.launch {
+            val profile = selectedConnectionProfile.first()
+            if (profile != null) {
+                try {
+                    val fullChat = chatRepository.getChat(profile.baseUrl, profile.apiKey, listChat.id)
+                    _selectedChat.value = fullChat
+                } catch (e: Exception) {
+                    Log.e("MainViewModel", "Failed to get chat", e)
+                }
+            }
         }
     }
 

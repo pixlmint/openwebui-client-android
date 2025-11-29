@@ -58,6 +58,11 @@ class ChatViewModel(application: Application, private val mainViewModel: MainVie
         }
     }
 
+    fun loadChat(chatToLoad: Chat) {
+        _chat.value = chatToLoad
+        _chatHistory.value = chatToLoad.messages
+    }
+
     fun clearChat() {
         _chat.value = null
         _chatHistory.value = emptyList()

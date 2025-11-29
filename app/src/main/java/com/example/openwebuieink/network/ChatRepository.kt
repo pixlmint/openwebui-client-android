@@ -90,6 +90,12 @@ class ChatRepository {
         return getApi(baseUrl, apiKey).getChats()
     }
 
+    @kotlinx.serialization.InternalSerializationApi
+    suspend fun getChat(baseUrl: String, apiKey: String?, chatId: String): Chat {
+        val response = getApi(baseUrl, apiKey).getUpdateChat(chatId)
+        return response.chat.toChat()
+    }
+
     suspend fun createChat(baseUrl: String, apiKey: String?, chat: CreateChatRequest): CreateChatResponse {
         return getApi(baseUrl, apiKey).createChat(chat)
     }

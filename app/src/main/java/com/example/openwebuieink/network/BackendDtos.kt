@@ -118,3 +118,32 @@ data class TaskResponse(
     val choices: List<TaskChoice>,
     val usage: UsageStats
 )
+
+@kotlinx.serialization.InternalSerializationApi
+fun MinimalChat.toChat(): Chat {
+    val convertedHistoryMessages = this.history.messages.mapValues { (_, minimalMessage) ->
+        Message(
+            role = minimalMessage.role,
+            content = minimalMessage.content,
+            models = minimalMessage.models,
+            model = minimalMessage.model
+        )
+    }
+
+    val convertedHistory = History(
+        currentId = this.history.currentId,
+        messages = convertedHistoryMessages
+    )
+
+    return Chat(
+        id = this.id,
+        title = this.title,
+        models = this.models,
+        files = this.files,
+        tags = this.tags,
+        params = this.params,
+        timestamp = this.timestamp,
+        messages = this.messages,
+        history = convertedHistory
+    )
+}

@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@kotlinx.serialization.InternalSerializationApi
 @Composable
 fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewModel) {
     val navController = rememberNavController()
@@ -92,15 +93,15 @@ fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewM
                         }
                      }
                 )
-                NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                    label = { Text(text = "Settings") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        navController.navigate("settings")
-                    }
-                )
+//                NavigationDrawerItem(
+//                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+//                    label = { Text(text = "Settings") },
+//                    selected = false,
+//                    onClick = {
+//                        scope.launch { drawerState.close() }
+//                        navController.navigate("settings")
+//                    }
+//                )
                 LazyColumn {
                     items(chats) { chat ->
                         NavigationDrawerItem(
@@ -108,6 +109,7 @@ fun AppNavigation(mainViewModel: MainViewModel, settingsViewModel: SettingsViewM
                             label = { Text(chat.title) },
                             selected = false,
                             onClick = {
+                                mainViewModel.setChat(chat)
                                 scope.launch { drawerState.close() }
                                 // navController.navigate("chat/${chat.id}")
                             }

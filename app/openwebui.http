@@ -76,13 +76,11 @@ Content-Type: application/json
 Authorization: Bearer {{apikey}}
 
 {
-  "chat_id": "0ede72a1-4e66-4520-9105-1c38",
-  "model": "openai/gpt-oss-20b",
-  "id": "assistant-msg-id-b5dd1ccc-ba5c-4f69-8c87-602000",
+  "model": "codegemma-2b",
   "messages": [
     {
       "role": "user",
-      "content": "Hello world"
+      "content": "<|fim_prefix|>local job = require('plenary.job')\nlocal conf = require('cmp_ai.config')\nService = {}\n\nfunction Service:new(o)\n  o = o or {}\n  setmetatable(o, self)\n  self.__index = self\n  return o\nend\n\nfunction Service:complete(\n  lines_before, ---@diagnostic disable-line\n  lines_after, ---@diagnostic disable-line\n  _\n) ---@diagnostic disable-line\n  error('Not Implemented!')\nend\n\nfunction Service:json_decode(data)\n  local status, result = pcall(vim.fn.json_decode, data)\n  if status then\n    return result\n  else\n    return nil, result\n  end\nend\n\nfunction Service:Post(url, headers, data, cb)\n    Service:_Request(url, headers, data, cb, { \"-X\", \"POST\" })\n\nend\n\nfunction Service:Get(url, headers, data, cb)\n  Service:_Request(url, headers, data, cb)\nend\n\nfunction Service:_Request(url, headers, data, cb, args)\n  headers = vim.tbl_extend('force', {}, headers or {})\n  headers[#headers + 1] = 'Content-Type: application/json'\n\n  local tmpfname = \"/tmp/gemma\"\n  local f = io.open(tmpfname, 'w+')\n  if f == nil then\n    vim.notify('Cannot open temporary message file: ' .. tmpfname, vim.log.levels.ERROR)\n    return\n  end\n\n  f:write(vim.fn.json_encode(data))\n  f:close()\n\n  args = vim.tbl_extend('force', args or {}, { '-d', '@' .. tmpfname })\n\n  local timeout_seconds = conf:get('max_timeout_seconds')\n  if tonumber(timeout_seconds) ~= nil then\n    args[#args + 1] = '--max-time'\n    args[#args + 1] = tonumber(timeout_seconds)\n  elseif timeout_seconds ~= nil then\n    vim.notify('cmp-ai: your max_timeout_seconds config is not a number', vim.log.levels.WARN)\n  end\n\n  for _, h in ipairs(headers) do\n    args[#args + 1] = '-H'\n    args[#args + 1] = \"'\" .. h .. \"'\"\n  end\n\n  args[#args + 1] = url\n\n  vim.print(args)\n\n  <|fim_suffix|><|fim_middle|>"
     }
   ],
   "stream": true

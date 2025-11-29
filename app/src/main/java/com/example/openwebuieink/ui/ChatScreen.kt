@@ -48,6 +48,13 @@ fun ChatScreen(mainViewModel: MainViewModel, onMenuClick: () -> Unit) {
     val chatHistory by viewModel.chatHistory.collectAsState()
     var message by remember { mutableStateOf("") }
     val selectedModel by mainViewModel.selectedModel.collectAsState()
+    val selectedChat by mainViewModel.selectedChat.collectAsState()
+
+    LaunchedEffect(selectedChat) {
+        selectedChat?.let {
+            viewModel.loadChat(it)
+        }
+    }
 
     LaunchedEffect(mainViewModel) {
         mainViewModel.clearChatEvent.onEach {
