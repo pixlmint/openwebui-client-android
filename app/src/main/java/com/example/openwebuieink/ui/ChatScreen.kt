@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
@@ -52,10 +53,18 @@ fun ChatScreen(mainViewModel: MainViewModel, onMenuClick: () -> Unit) {
     val selectedModel by mainViewModel.selectedModel.collectAsState()
     val selectedChat by mainViewModel.selectedChat.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(selectedChat) {
         selectedChat?.let {
             viewModel.loadChat(it)
+        }
+    }
+
+    // Auto-scroll to bottom when chat history changes
+    LaunchedEffect(chatHistory.size) {
+        if (chatHistory.isNotEmpty()) {
+            listState.animateScrollToItem(chatHistory.size - 1)
         }
     }
 
@@ -97,7 +106,8 @@ fun ChatScreen(mainViewModel: MainViewModel, onMenuClick: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(8.dp))
             LazyColumn(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                state = listState
             ) {
                 items(chatHistory) { chatMessage ->
                     val backgroundColor = if (chatMessage.role == "user") {
