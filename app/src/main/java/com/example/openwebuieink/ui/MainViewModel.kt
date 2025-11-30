@@ -54,8 +54,13 @@ class MainViewModel(application: Application, private val settingsViewModel: Set
             try {
                 val response = chatRepository.getModels(profile.baseUrl, profile.apiKey)
                 _models.value = response.data
-                if (_selectedModel.value == null && response.data.isNotEmpty()) {
-                    _selectedModel.value = response.data.first()
+                if (response.data.isNotEmpty()) {
+                    val modelToSelect = profile.defaultModel?.let { defaultModelName ->
+                        response.data.find { it.name == defaultModelName }
+                    }
+                    _selectedModel.value = modelToSelect ?: response.data.first()
+                } else {
+                    _selectedModel.value = null
                 }
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Failed to get models", e)
